@@ -32,17 +32,14 @@ for iteration in range(100000):
 
 	#Backprop
 	#Error
-	l2_error = y-layer_2
+	l2_error = y-layer_2 #this is the derivative of 1/2(y-layer_2)^2 with respect to the activation function
 	if (iteration%1000==0):
 		print(l2_error)
 		#Check if MSE is below set threshold
 		if np.mean(0.5*(l2_error**2))<threshold:
 			break
 
-	#The derivative of the activation is a function of the activation output
-	#this is very convenient and efficient
-	#delta is the "Error Weighted Derivative"
-	#Need to discuss this step, it confuses me a bit.
+	#multiply the derivative dC/da * da/dw to obtain dC/dw
 	l2_delta = l2_error*activation(layer_2,True)
 
 	#How much did layer 1 contribute to the error?
