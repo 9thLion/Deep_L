@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 #XOR toy data
 x0 = np.array([1,1,1,1])
@@ -9,6 +10,7 @@ A = np.vstack((x0,x1,x2))
 
 #Hyperparameters
 threshold = 0.000001
+n_layers = 3
 
 #Activation function and its derivative
 def activation(x, deriv=False):
@@ -19,49 +21,56 @@ def activation(x, deriv=False):
 
 #Initialize random weights (mean = 0)
 synapses ={}
+bias={}
 synapses[0] = 2*np.random.random((3,2)) - 1
 synapses[1] = 2*np.random.random((2,1)) - 1
-bias1 = 0
-bias2 = 0
+bias[0] = 0
+bias[1] = 0
 
+t0=time.clock()
 #Lillicrap's Feedback Alignment: B is a fixed random matrix to be used in all backprop
 FA=True
 B = 2*np.random.random((2,1)) - 1
+
+layer = {}
+error = {}
+delta = {}
 for iteration in range(100000):
 
 	#Feedforward
 	#rows of layer are number of nodes, columns are different samples
-	layer_0 = A
-	layer_1 = activation(synapses[0].T.dot(layer_0) + bias1)
-	layer_2 = activation(synapses[1].T.dot(layer_1) + bias2)
+	layer[0] = A
+	for i in range(1,n_layers):
+		layer[i] = activation(synapses[i-1].T.dot(layer[i-1]) + bias[i-1])
 
 	#Backprop
 	#Error
-	l2_error = y-layer_2
+	error[2] = y-layer[2]
 	if (iteration%1000==0):
-		print(l2_error)
+		print(error[2])
 		#Check if MSE is below set threshold
-		if np.mean(0.5*(l2_error**2))<threshold:
+		if np.mean(0.5*(error[2]**2))<threshold:
 			break
 
 	#The derivative of the activation is a function of the activation output
 	#this is very convenient and efficient
 	#dC/dW=(y-y')*a*(1-a)
-	l2_delta = l2_error*activation(layer_2,True)
+	delta[2] = error[2]*activation(layer[2],True)
 
 	#How much did layer 1 contribute to the error?
 	#FA = Feedback Alignment
 	if FA==True:
-		l1_error = B.dot(l2_delta)
+		error[1] = B.dot(delta[2])
 	else:
-		l1_error = synapses[1].dot(l2_delta)
+		error[1] = synapses[1].dot(delta[2])
 
-	l1_delta = l1_error*activation(layer_1,True)
+	delta[1] = error[1]*activation(layer[1],True)
 
 	#update
-	synapses[1] += layer_1.dot(l2_delta.T)
-	synapses[0] += layer_0.dot(l1_delta.T)
-	bias1 += l1_delta
-	bias2 += l2_delta
+	for i in synapses.keys():
+		synapses[i] += layer[i].dot(delta[i+1].T)
+		bias[i] += delta[i+1]
 
-print(layer_2)
+t1=time.clock()
+print('Final output:\n', layer[2])
+print('Time:', t1-t0)
