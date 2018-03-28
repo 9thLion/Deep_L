@@ -1,1 +1,1 @@
-Simple ANN from scratch using numpy
+A simple ANN from scratch using numpy done entirely from memory for practice purposes.
